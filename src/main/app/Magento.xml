@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:magento="http://www.mulesoft.org/schema/mule/magento" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/magento http://www.mulesoft.org/schema/mule/magento/1.1/mule-magento.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/5.0/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+    <magento:config name="Magento" username="mule" password="123456" address="http://localhost:8888/magento/index.php/api/V2_soap/index/" doc:name="Magento">
+        <magento:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
+    </magento:config>
+    <sfdc:config name="Salesforce - MuleBot" username="mulebot@mulesoft.com" password="Cloudhub1" securityToken="PcaMonV3JJ0nHOFeYAjJvJaaG" doc:name="Salesforce">
+        <sfdc:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
+    </sfdc:config>
+    <flow name="syncProductsWithMagento" doc:name="syncProductsWithMagento">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="refreshproducts" doc:name="HTTP"/>
+        <sfdc:query config-ref="Salesforce - MuleBot" query="select Id, Name, ProductCode, Description, IsActive, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, Family, IsDeleted, Author__c, Inventory__c, Publication_Date__c from Product2" doc:name="Get All Products"/>
+        <foreach doc:name="For Each">
+            <logger message="Next Product Code : #[payload.ProductCode]" level="INFO" doc:name="Prod Code Log"/>
+            <enricher source="#[payload]" target="#[categoryId]" doc:name="enrichWithProductCategoryID">
+                <flow-ref name="upsertMagentoProductCategory" doc:name="findCatID"/>
+            </enricher>
+            <magento:create-product config-ref="Magento" type="simple" set="4" sku="#[payload.ProductCode]" storeViewIdOrCode="default" doc:name="Magento">
+                <magento:attributes description="#[payload.Description]" name="#[payload.Name]" short_description="#[payload.Author__c]">
+                    <magento:stock_data qty="#[payload.Inventory__c]"/>
+                </magento:attributes>
+            </magento:create-product>
+        </foreach>
+    </flow>
+    <flow name="upsertMagentoProductCategory" doc:name="upsertMagentoProductCategory">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="magcat" doc:name="HTTP"/>
+        <flow-ref name="findMagentoCategoryID" doc:name="findCategoryID"/>
+        <choice doc:name="Choice">
+            <when expression="#[payload &lt; 0]">
+                <flow-ref name="createMagentoCategory" doc:name="createMagentoCategory"/>
+            </when>
+            <otherwise>
+                <logger message="DO NOTHING - CATEGORY EXISTS" level="INFO" doc:name="DO NOTHING"/>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="findMagentoCategoryID" doc:name="findMagentoCategoryID">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="magfindcat" doc:name="HTTP"/>
+        <magento:get-category-tree config-ref="Magento" parentId="1" storeViewIdOrCode="default" doc:name="Magento"/>
+        <scripting:transformer doc:name="findCategoryInMagentoResponse">
+            <scripting:script engine="Groovy"><![CDATA[println 'IP CAT ' + message.getInboundProperty('cat')
+def findName
+findName = { children, catName, val ->
+	for (int i = 0; i < children.length  && val < 0; i++) {
+		com.magento.api.CatalogCategoryEntity entity = children[i]
+		println 'BOOYAH ' + entity.name + ' children? ' + entity.getChildren().size()
+		if (entity.name.equals(catName)) {
+			println 'FOUND'
+			val = entity.category_id;
+		} else if (entity.getChildren().size() > 0) {
+			val = findName(entity.getChildren(), catName, val)
+		}
+	}
+	return val;
+}
+def id = findName(payload.getChildren(), message.getInboundProperty('cat'), -1)
+return id
+
+]]></scripting:script>
+        </scripting:transformer>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <logger message="Product Category ID is : #[payload]" level="INFO" doc:name="LOG CAT ID"/>
+    </flow>
+    <flow name="createMagentoCategory" doc:name="createMagentoCategory">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="createcat" doc:name="HTTP"/>
+        <set-property propertyName="#['cat']" value="#['Books']" doc:name="Property"/>
+        <flow-ref name="findMagentoCategoryID" doc:name="lookUpParentCategory"/>
+        <choice doc:name="Choice">
+            <when expression="#[payload &lt; 0]">
+                <flow-ref name="createBaseCategory" doc:name="createBaseCategory"/>
+            </when>
+            <otherwise>
+                <logger message="#[payload]" level="INFO" doc:name="DO NOTHING"/>
+            </otherwise>
+        </choice>
+        <logger level="INFO" doc:name="BASE CAT ID LOG"/>
+        <scripting:transformer doc:name="constructCatObject">
+            <scripting:script engine="Groovy"><![CDATA[String[] s = ['Name', 'Price'] as String[]
+def cat = [
+	'parentId' : 3,
+	'name' : message.getInboundProperty('cat'),
+	'storeId' : 'default',
+	'availableSortBy' : s,
+	'defaultSortBy' : path="createbookcat">'Name'
+]
+return cat]]></scripting:script>
+        </scripting:transformer>
+
+    <json:object-to-json-transformer doc:name="Object to JSON"/>
+    </flow>
+    <flow name="createBaseCategory" doc:name="createBaseCategory">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" doc:name="HTTP" path="createbookcat"/>
+        <logger message="CREATING BOOK CAT IN MAGENTO" level="INFO" doc:name="CREATING CAT IN MAGENTO"/>
+        <scripting:transformer doc:name="constructCatObject">
+            <scripting:script engine="Groovy"><![CDATA[String[] s = ['Name', 'Price'] as String[]
+def cat = [
+	'parentId' : 1,
+	'name' : 'Books',
+	'storeId' : 'default',
+	'availableSortBy' : s,
+	'defaultSortBy' : 'Name'
+]
+return cat]]></scripting:script>
+        </scripting:transformer>
+        <magento:create-category config-ref="Magento" parentId="#[payload.parentId]" storeViewIdOrCode="#[payload.storeId]" doc:name="Magento">
+            <magento:catalog-category-entity name="#[payload.name]" is_active="1" available_sort_by-ref="#[payload.availableSortBy]" default_sort_by="#[payload.defaultSortBy]" include_in_menu="0"/>
+        </magento:create-category>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+    </flow>
+</mule>

@@ -1,0 +1,602 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<mule-configuration xmlns="http://www.mulesoft.com/tooling/messageflow" name="Magento">
+    <global-element type="http://www.mulesoft.org/schema/mule/magento/config" name="Magento" entity-id="Magento#4">
+        <properties>
+            <property value="mule" name="username"/>
+            <property value="http://localhost:8888/magento/index.php/api/V2_soap/index/" name="address"/>
+            <property value="Magento" name="name"/>
+            <property value="123456" name="password"/>
+            <property value="1" name="auxiliary;index"/>
+            <property-collection name="@http://www.mulesoft.org/schema/mule/magento/connection-pooling-profile;0">
+                <property value="WHEN_EXHAUSTED_GROW" name="exhaustedAction"/>
+                <property value="2" name="auxiliary;index"/>
+                <property value="2" name="auxiliary;wrapIn"/>
+                <property value="INITIALISE_ONE" name="initialisationPolicy"/>
+            </property-collection>
+        </properties>
+    </global-element>
+    <global-element type="http://www.mulesoft.org/schema/mule/sfdc/config" name="Salesforce" entity-id="Salesforce#2">
+        <properties>
+            <property name="proxyUsername"/>
+            <property value="PcaMonV3JJ0nHOFeYAjJvJaaG" name="securityToken"/>
+            <property name="proxyHost"/>
+            <property value="true" name="auxiliary;metauseMetaData"/>
+            <property name="allowFieldTruncationSupport"/>
+            <property name="assignmentRuleId"/>
+            <property name="proxyPort"/>
+            <property value="Cloudhub1" name="password"/>
+            <property name="url"/>
+            <property name="clientId"/>
+            <property value="mulebot@mulesoft.com" name="username"/>
+            <property name="useDefaultRule"/>
+            <property value="Salesforce - MuleBot" name="name"/>
+            <property name="timeObjectStore-ref"/>
+            <property value="3" name="auxiliary;index"/>
+            <property name="proxyPassword"/>
+            <property-collection name="@http://www.mulesoft.org/schema/mule/sfdc/connection-pooling-profile;0">
+                <property value="WHEN_EXHAUSTED_GROW" name="exhaustedAction"/>
+                <property value="4" name="auxiliary;index"/>
+                <property value="4" name="auxiliary;wrapIn"/>
+                <property value="INITIALISE_ONE" name="initialisationPolicy"/>
+            </property-collection>
+        </properties>
+    </global-element>
+    <flow SubFlow="false" name="syncProductsWithMagento" entity-id="flow#1">
+        <properties>
+            <property name="processingStrategy"/>
+            <property name="processingStrategy2"/>
+            <property name="bussinessEventsLabel"/>
+            <property name="tracking:enable-default-events"/>
+            <property value="5" name="auxiliary;index"/>
+        </properties>
+        <lane isChoiceOtherwiseLane="false" index="0" hadOnlyOneElement="false" entity-id="compartment-lane#1">
+            <graphicalData height="0" width="0" y="0" x="0"/>
+            <endpoint message-exchange-pattern="RequestResponse" direction="Inbound" type="http://www.mulesoft.org/schema/mule/http/endpoint" name="HTTP" entity-id="HTTP#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="8081" name="port"/>
+                    <property value="localhost" name="host"/>
+                    <property name="businessEventsLabel"/>
+                    <property name="followRedirects"/>
+                    <property value="http://www.mulesoft.org/schema/mule/http/endpoint" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="keep-alive"/>
+                    <property name="contentType"/>
+                    <property name="disableTransportTransformer"/>
+                    <property name="password"/>
+                    <property value="request-response" name="exchange-pattern"/>
+                    <property name="tracking:enable-default-events"/>
+                    <property name="ref"/>
+                    <property name="transformer-refs"/>
+                    <property name="httpLabel"/>
+                    <property name="address"/>
+                    <property value="refreshproducts" name="path"/>
+                    <property name="encoding"/>
+                    <property name="responseTransformer-refs"/>
+                    <property name="method"/>
+                    <property name="user"/>
+                    <property name="responseTimeout"/>
+                    <property name="mimeType"/>
+                    <property value="6" name="auxiliary;index"/>
+                    <property name="connector-ref"/>
+                </properties>
+            </endpoint>
+            <pattern type="http://www.mulesoft.org/schema/mule/sfdc/sfdc-connector" name="Get All Products" entity-id="Salesforce#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name=""/>
+                    <property name="proxyUsername"/>
+                    <property name="securityToken"/>
+                    <property name="proxyHost"/>
+                    <property value="select Id, Name, ProductCode, Description, IsActive, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, Family, IsDeleted, Author__c, Inventory__c, Publication_Date__c from Product2" name="query"/>
+                    <property value="http://www.mulesoft.org/schema/mule/sfdc/query" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="proxyPort"/>
+                    <property name="password"/>
+                    <property name="url"/>
+                    <property name="username"/>
+                    <property name="accessTokenId"/>
+                    <property value="Salesforce - MuleBot" name="config-ref"/>
+                    <property value="7" name="auxiliary;index"/>
+                    <property name="proxyPassword"/>
+                </properties>
+            </pattern>
+            <scope type="http://www.mulesoft.org/schema/mule/core/foreach" name="For Each" entity-id="For Each#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="counterVariableName"/>
+                    <property name="rootMessageVariableName"/>
+                    <property name="batchSize"/>
+                    <property name="collection"/>
+                    <property value="8" name="auxiliary;index"/>
+                </properties>
+                <compartment entity-id="compartment#1">
+                    <lane isChoiceOtherwiseLane="false" index="0" hadOnlyOneElement="false" entity-id="compartment-lane#2">
+                        <pattern type="http://www.mulesoft.org/schema/mule/core/logger" name="Prod Code Log" entity-id="Logger#1">
+                            <graphicalData height="0" width="0" y="0" x="0"/>
+                            <properties>
+<property value="Next Product Code : #[payload.ProductCode]" name="message"/>
+<property name="category"/>
+<property value="INFO" name="level"/>
+<property value="9" name="auxiliary;index"/>
+                            </properties>
+                        </pattern>
+                        <scope type="org.mule.tooling.ui.modules.core.scope.enricher" name="enrichWithProductCategoryID" entity-id="Message Enricher#1">
+                            <graphicalData height="0" width="0" y="0" x="0"/>
+                            <properties>
+<property value="#[payload]" name="source"/>
+<property value="#[categoryId]" name="target"/>
+<property value="10" name="auxiliary;index"/>
+                            </properties>
+                            <compartment entity-id="compartment#2">
+<lane isChoiceOtherwiseLane="false" index="0" hadOnlyOneElement="false" entity-id="compartment-lane#3">
+    <pattern type="http://www.mulesoft.org/schema/mule/core/flow-ref" name="findCatID" entity-id="Flow Reference#1">
+        <graphicalData height="0" width="0" y="0" x="0"/>
+        <properties>
+            <property value="upsertMagentoProductCategory" name="name"/>
+            <property value="11" name="auxiliary;index"/>
+        </properties>
+    </pattern>
+</lane>
+                            </compartment>
+                        </scope>
+                        <pattern type="http://www.mulesoft.org/schema/mule/magento/magento-connector" name="Magento" entity-id="Magento#1">
+                            <graphicalData height="0" width="0" y="0" x="0"/>
+                            <properties>
+<property name=""/>
+<property name="username"/>
+<property name="address"/>
+<property value="4" name="set"/>
+<property value="default" name="storeViewIdOrCode"/>
+<property value="http://www.mulesoft.org/schema/mule/magento/create-product" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+<property value="#[payload.ProductCode]" name="sku"/>
+<property value="simple" name="type"/>
+<property name="password"/>
+<property value="Magento" name="config-ref"/>
+<property value="12" name="auxiliary;index"/>
+<property-collection name="@http://www.mulesoft.org/schema/mule/magento/attributes;0">
+    <property value="#[payload.Author__c]" name="short_description"/>
+    <property value="#[payload.Description]" name="description"/>
+    <property value="#[payload.Name]" name="name"/>
+    <property value="13" name="auxiliary;index"/>
+    <property value="13" name="auxiliary;wrapIn"/>
+    <property-collection name="@http://www.mulesoft.org/schema/mule/magento/stock_data;1">
+        <property value="#[payload.Inventory__c]" name="qty"/>
+        <property value="14" name="auxiliary;index"/>
+        <property value="14" name="auxiliary;wrapIn"/>
+    </property-collection>
+</property-collection>
+                            </properties>
+                        </pattern>
+                    </lane>
+                </compartment>
+            </scope>
+        </lane>
+    </flow>
+    <flow SubFlow="false" name="upsertMagentoProductCategory" entity-id="flow#2">
+        <properties>
+            <property name="processingStrategy"/>
+            <property name="processingStrategy2"/>
+            <property name="bussinessEventsLabel"/>
+            <property name="tracking:enable-default-events"/>
+            <property value="15" name="auxiliary;index"/>
+        </properties>
+        <lane isChoiceOtherwiseLane="false" index="0" hadOnlyOneElement="false" entity-id="compartment-lane#4">
+            <graphicalData height="0" width="0" y="0" x="0"/>
+            <endpoint message-exchange-pattern="RequestResponse" direction="Inbound" type="http://www.mulesoft.org/schema/mule/http/endpoint" name="HTTP" entity-id="HTTP#2">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="8081" name="port"/>
+                    <property value="localhost" name="host"/>
+                    <property name="businessEventsLabel"/>
+                    <property name="followRedirects"/>
+                    <property value="http://www.mulesoft.org/schema/mule/http/endpoint" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="keep-alive"/>
+                    <property name="contentType"/>
+                    <property name="disableTransportTransformer"/>
+                    <property name="password"/>
+                    <property value="request-response" name="exchange-pattern"/>
+                    <property name="tracking:enable-default-events"/>
+                    <property name="ref"/>
+                    <property name="transformer-refs"/>
+                    <property name="httpLabel"/>
+                    <property name="address"/>
+                    <property value="magcat" name="path"/>
+                    <property name="encoding"/>
+                    <property name="responseTransformer-refs"/>
+                    <property name="method"/>
+                    <property name="user"/>
+                    <property name="responseTimeout"/>
+                    <property name="mimeType"/>
+                    <property value="16" name="auxiliary;index"/>
+                    <property name="connector-ref"/>
+                </properties>
+            </endpoint>
+            <pattern type="http://www.mulesoft.org/schema/mule/core/flow-ref" name="findCategoryID" entity-id="Flow Reference#2">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="findMagentoCategoryID" name="name"/>
+                    <property value="17" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+            <splitter index="18" type="org.mule.tooling.ui.modules.core.pattern.cbr" name="Choice" entity-id="Choice#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property-collection name="3a865744-a035-454b-b59d-ed8b43126cac">
+                        <property value="true" name="choice.otherwise"/>
+                        <property-collection name="choice.attributes"/>
+                    </property-collection>
+                    <property-collection name="87cfdd93-bdba-49e7-b374-f0d6cbdd81ef">
+                        <property value="#[payload &lt; 0]" name="choice.expression"/>
+                        <property-collection name="choice.attributes">
+                            <property value="#[payload &lt; 0]" name="expression"/>
+                        </property-collection>
+                    </property-collection>
+                </properties>
+                <pattern type="org.mule.tooling.ui.modules.core.pattern.cbr" name="Choice" entity-id="Choice#2"/>
+                <compartment entity-id="compartment#3">
+                    <lane isChoiceOtherwiseLane="false" index="20" hadOnlyOneElement="false" entity-id="compartment-lane#5">
+                        <pattern type="http://www.mulesoft.org/schema/mule/core/flow-ref" name="createMagentoCategory" entity-id="Flow Reference#3">
+                            <graphicalData height="0" width="0" y="0" x="0"/>
+                            <properties>
+<property value="createMagentoCategory" name="name"/>
+<property value="20" name="auxiliary;index"/>
+                            </properties>
+                        </pattern>
+                    </lane>
+                    <lane isChoiceOtherwiseLane="true" index="22" hadOnlyOneElement="false" entity-id="compartment-lane#6">
+                        <pattern type="http://www.mulesoft.org/schema/mule/core/logger" name="DO NOTHING" entity-id="Logger#2">
+                            <graphicalData height="0" width="0" y="0" x="0"/>
+                            <properties>
+<property value="DO NOTHING - CATEGORY EXISTS" name="message"/>
+<property name="category"/>
+<property value="INFO" name="level"/>
+<property value="22" name="auxiliary;index"/>
+                            </properties>
+                        </pattern>
+                    </lane>
+                </compartment>
+            </splitter>
+        </lane>
+    </flow>
+    <flow SubFlow="false" name="findMagentoCategoryID" entity-id="flow#3">
+        <properties>
+            <property name="processingStrategy"/>
+            <property name="processingStrategy2"/>
+            <property name="bussinessEventsLabel"/>
+            <property name="tracking:enable-default-events"/>
+            <property value="23" name="auxiliary;index"/>
+        </properties>
+        <lane isChoiceOtherwiseLane="false" index="0" hadOnlyOneElement="false" entity-id="compartment-lane#7">
+            <graphicalData height="0" width="0" y="0" x="0"/>
+            <endpoint message-exchange-pattern="RequestResponse" direction="Inbound" type="http://www.mulesoft.org/schema/mule/http/endpoint" name="HTTP" entity-id="HTTP#3">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="8081" name="port"/>
+                    <property value="localhost" name="host"/>
+                    <property name="businessEventsLabel"/>
+                    <property name="followRedirects"/>
+                    <property value="http://www.mulesoft.org/schema/mule/http/endpoint" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="keep-alive"/>
+                    <property name="contentType"/>
+                    <property name="disableTransportTransformer"/>
+                    <property name="password"/>
+                    <property value="request-response" name="exchange-pattern"/>
+                    <property name="tracking:enable-default-events"/>
+                    <property name="ref"/>
+                    <property name="transformer-refs"/>
+                    <property name="httpLabel"/>
+                    <property name="address"/>
+                    <property value="magfindcat" name="path"/>
+                    <property name="encoding"/>
+                    <property name="responseTransformer-refs"/>
+                    <property name="method"/>
+                    <property name="user"/>
+                    <property name="responseTimeout"/>
+                    <property name="mimeType"/>
+                    <property value="24" name="auxiliary;index"/>
+                    <property name="connector-ref"/>
+                </properties>
+            </endpoint>
+            <pattern type="http://www.mulesoft.org/schema/mule/magento/magento-connector" name="Magento" entity-id="Magento#2">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name=""/>
+                    <property value="1" name="parentId"/>
+                    <property name="username"/>
+                    <property name="address"/>
+                    <property value="default" name="storeViewIdOrCode"/>
+                    <property value="http://www.mulesoft.org/schema/mule/magento/get-category-tree" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="password"/>
+                    <property value="Magento" name="config-ref"/>
+                    <property value="25" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/scripting/groovyTransformer" name="findCategoryInMagentoResponse" entity-id="Groovy#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="returnClass"/>
+                    <property name="ignoreBadInput"/>
+                    <property name="encoding"/>
+                    <property name="mimeType"/>
+                    <property value="26" name="auxiliary;index"/>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/scripting/script-for-properties;0">
+                        <property value="println 'IP CAT ' + message.getInboundProperty('cat')&#xA;def findName&#xA;findName = { children, catName, val -&gt;&#xA;&#x9;for (int i = 0; i &lt; children.length  &amp;&amp; val &lt; 0; i++) {&#xA;&#x9;&#x9;com.magento.api.CatalogCategoryEntity entity = children[i]&#xA;&#x9;&#x9;println 'BOOYAH ' + entity.name + ' children? ' + entity.getChildren().size()&#xA;&#x9;&#x9;if (entity.name.equals(catName)) {&#xA;&#x9;&#x9;&#x9;println 'FOUND'&#xA;&#x9;&#x9;&#x9;val = entity.category_id;&#xA;&#x9;&#x9;} else if (entity.getChildren().size() &gt; 0) {&#xA;&#x9;&#x9;&#x9;val = findName(entity.getChildren(), catName, val)&#xA;&#x9;&#x9;}&#xA;&#x9;}&#xA;&#x9;return val;&#xA;}&#xA;def id = findName(payload.getChildren(), message.getInboundProperty('cat'), -1)&#xA;return id&#xA;&#xA;" name="text"/>
+                        <property value="Groovy" name="engine"/>
+                        <property value="27" name="auxiliary;index"/>
+                        <property value="27" name="auxiliary;wrapIn"/>
+                    </property-collection>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/scripting/script;0">
+                        <property value="println 'IP CAT ' + message.getInboundProperty('cat')&#xA;def findName&#xA;findName = { children, catName, val -&gt;&#xA;&#x9;for (int i = 0; i &lt; children.length  &amp;&amp; val &lt; 0; i++) {&#xA;&#x9;&#x9;com.magento.api.CatalogCategoryEntity entity = children[i]&#xA;&#x9;&#x9;println 'BOOYAH ' + entity.name + ' children? ' + entity.getChildren().size()&#xA;&#x9;&#x9;if (entity.name.equals(catName)) {&#xA;&#x9;&#x9;&#x9;println 'FOUND'&#xA;&#x9;&#x9;&#x9;val = entity.category_id;&#xA;&#x9;&#x9;} else if (entity.getChildren().size() &gt; 0) {&#xA;&#x9;&#x9;&#x9;val = findName(entity.getChildren(), catName, val)&#xA;&#x9;&#x9;}&#xA;&#x9;}&#xA;&#x9;return val;&#xA;}&#xA;def id = findName(payload.getChildren(), message.getInboundProperty('cat'), -1)&#xA;return id&#xA;&#xA;" name="text"/>
+                        <property value="Groovy" name="engine"/>
+                        <property value="27" name="auxiliary;index"/>
+                        <property value="27" name="auxiliary;wrapIn"/>
+                    </property-collection>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/core/object-to-string-transformer" name="Object to String" entity-id="Object to String#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="returnClass"/>
+                    <property name="ignoreBadInput"/>
+                    <property name="encoding"/>
+                    <property name="mimeType"/>
+                    <property value="28" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/core/logger" name="LOG CAT ID" entity-id="Logger#3">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="Product Category ID is : #[payload]" name="message"/>
+                    <property name="category"/>
+                    <property value="INFO" name="level"/>
+                    <property value="29" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+        </lane>
+    </flow>
+    <flow SubFlow="false" name="createMagentoCategory" entity-id="flow#4">
+        <properties>
+            <property name="processingStrategy"/>
+            <property name="processingStrategy2"/>
+            <property name="bussinessEventsLabel"/>
+            <property name="tracking:enable-default-events"/>
+            <property value="30" name="auxiliary;index"/>
+        </properties>
+        <lane isChoiceOtherwiseLane="false" index="0" hadOnlyOneElement="false" entity-id="compartment-lane#8">
+            <graphicalData height="0" width="0" y="0" x="0"/>
+            <endpoint message-exchange-pattern="RequestResponse" direction="Inbound" type="http://www.mulesoft.org/schema/mule/http/endpoint" name="HTTP" entity-id="HTTP#4">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="8081" name="port"/>
+                    <property value="localhost" name="host"/>
+                    <property name="businessEventsLabel"/>
+                    <property name="followRedirects"/>
+                    <property value="http://www.mulesoft.org/schema/mule/http/endpoint" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="keep-alive"/>
+                    <property name="contentType"/>
+                    <property name="disableTransportTransformer"/>
+                    <property name="password"/>
+                    <property value="request-response" name="exchange-pattern"/>
+                    <property name="tracking:enable-default-events"/>
+                    <property name="ref"/>
+                    <property name="transformer-refs"/>
+                    <property name="httpLabel"/>
+                    <property name="address"/>
+                    <property value="createcat" name="path"/>
+                    <property name="encoding"/>
+                    <property name="responseTransformer-refs"/>
+                    <property name="method"/>
+                    <property name="user"/>
+                    <property name="responseTimeout"/>
+                    <property name="mimeType"/>
+                    <property value="31" name="auxiliary;index"/>
+                    <property name="connector-ref"/>
+                </properties>
+            </endpoint>
+            <pattern type="http://www.mulesoft.org/schema/mule/core/properties-transformer" name="Property" entity-id="Property#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="#['cat']" name="propertyName"/>
+                    <property value="#['Books']" name="value"/>
+                    <property value="http://www.mulesoft.org/schema/mule/core/set-property" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property value="32" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/core/flow-ref" name="lookUpParentCategory" entity-id="Flow Reference#4">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="findMagentoCategoryID" name="name"/>
+                    <property value="33" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+            <splitter index="34" type="org.mule.tooling.ui.modules.core.pattern.cbr" name="Choice" entity-id="Choice#2">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property-collection name="bf5e3850-0ab0-443b-a58e-490bba287be9">
+                        <property value="#[payload &lt; 0]" name="choice.expression"/>
+                        <property-collection name="choice.attributes">
+                            <property value="#[payload &lt; 0]" name="expression"/>
+                        </property-collection>
+                    </property-collection>
+                    <property-collection name="21719419-558a-4916-ac21-558e4a2e59e1">
+                        <property value="true" name="choice.otherwise"/>
+                        <property-collection name="choice.attributes"/>
+                    </property-collection>
+                </properties>
+                <pattern type="org.mule.tooling.ui.modules.core.pattern.cbr" name="Choice" entity-id="Choice#4"/>
+                <compartment entity-id="compartment#4">
+                    <lane isChoiceOtherwiseLane="false" index="36" hadOnlyOneElement="false" entity-id="compartment-lane#9">
+                        <pattern type="http://www.mulesoft.org/schema/mule/core/flow-ref" name="createBaseCategory" entity-id="Flow Reference#5">
+                            <graphicalData height="0" width="0" y="0" x="0"/>
+                            <properties>
+<property value="createBaseCategory" name="name"/>
+<property value="36" name="auxiliary;index"/>
+                            </properties>
+                        </pattern>
+                    </lane>
+                    <lane isChoiceOtherwiseLane="true" index="38" hadOnlyOneElement="false" entity-id="compartment-lane#10">
+                        <pattern type="http://www.mulesoft.org/schema/mule/core/logger" name="DO NOTHING" entity-id="Logger#4">
+                            <graphicalData height="0" width="0" y="0" x="0"/>
+                            <properties>
+<property value="#[payload]" name="message"/>
+<property name="category"/>
+<property value="INFO" name="level"/>
+<property value="38" name="auxiliary;index"/>
+                            </properties>
+                        </pattern>
+                    </lane>
+                </compartment>
+            </splitter>
+            <pattern type="http://www.mulesoft.org/schema/mule/core/logger" name="BASE CAT ID LOG" entity-id="Logger#5">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="message"/>
+                    <property name="category"/>
+                    <property value="INFO" name="level"/>
+                    <property value="39" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/scripting/groovyTransformer" name="constructCatObject" entity-id="Groovy#2">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="returnClass"/>
+                    <property name="ignoreBadInput"/>
+                    <property name="encoding"/>
+                    <property name="mimeType"/>
+                    <property value="40" name="auxiliary;index"/>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/scripting/script-for-properties;0">
+                        <property value="String[] s = ['Name', 'Price'] as String[]&#xA;def cat = [&#xA;&#x9;'parentId' : 3,&#xA;&#x9;'name' : message.getInboundProperty('cat'),&#xA;&#x9;'storeId' : 'default',&#xA;&#x9;'availableSortBy' : s,&#xA;&#x9;'defaultSortBy' : path=&quot;createbookcat&quot;&gt;'Name'&#xA;]&#xA;return cat" name="text"/>
+                        <property value="Groovy" name="engine"/>
+                        <property value="41" name="auxiliary;index"/>
+                        <property value="41" name="auxiliary;wrapIn"/>
+                    </property-collection>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/scripting/script;0">
+                        <property value="String[] s = ['Name', 'Price'] as String[]&#xA;def cat = [&#xA;&#x9;'parentId' : 3,&#xA;&#x9;'name' : message.getInboundProperty('cat'),&#xA;&#x9;'storeId' : 'default',&#xA;&#x9;'availableSortBy' : s,&#xA;&#x9;'defaultSortBy' : path=&quot;createbookcat&quot;&gt;'Name'&#xA;]&#xA;return cat" name="text"/>
+                        <property value="Groovy" name="engine"/>
+                        <property value="41" name="auxiliary;index"/>
+                        <property value="41" name="auxiliary;wrapIn"/>
+                    </property-collection>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/json/object-to-json-transformer" name="Object to JSON" entity-id="Object to JSON#1">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="sourceClass"/>
+                    <property name="returnClass"/>
+                    <property name="ignoreBadInput"/>
+                    <property name="encoding"/>
+                    <property name="mapper-ref"/>
+                    <property name="mimeType"/>
+                    <property value="42" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+        </lane>
+    </flow>
+    <flow SubFlow="false" name="createBaseCategory" entity-id="flow#5">
+        <properties>
+            <property name="processingStrategy"/>
+            <property name="processingStrategy2"/>
+            <property name="bussinessEventsLabel"/>
+            <property name="tracking:enable-default-events"/>
+            <property value="43" name="auxiliary;index"/>
+        </properties>
+        <lane isChoiceOtherwiseLane="false" index="0" hadOnlyOneElement="false" entity-id="compartment-lane#11">
+            <graphicalData height="0" width="0" y="0" x="0"/>
+            <endpoint message-exchange-pattern="RequestResponse" direction="Inbound" type="http://www.mulesoft.org/schema/mule/http/endpoint" name="HTTP" entity-id="HTTP#5">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="8081" name="port"/>
+                    <property value="localhost" name="host"/>
+                    <property name="businessEventsLabel"/>
+                    <property name="followRedirects"/>
+                    <property value="http://www.mulesoft.org/schema/mule/http/endpoint" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="keep-alive"/>
+                    <property name="contentType"/>
+                    <property name="disableTransportTransformer"/>
+                    <property name="password"/>
+                    <property value="request-response" name="exchange-pattern"/>
+                    <property name="tracking:enable-default-events"/>
+                    <property name="ref"/>
+                    <property name="transformer-refs"/>
+                    <property name="httpLabel"/>
+                    <property name="address"/>
+                    <property value="createbookcat" name="path"/>
+                    <property name="encoding"/>
+                    <property name="responseTransformer-refs"/>
+                    <property name="method"/>
+                    <property name="user"/>
+                    <property name="responseTimeout"/>
+                    <property name="mimeType"/>
+                    <property value="44" name="auxiliary;index"/>
+                    <property name="connector-ref"/>
+                </properties>
+            </endpoint>
+            <pattern type="http://www.mulesoft.org/schema/mule/core/logger" name="CREATING CAT IN MAGENTO" entity-id="Logger#6">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property value="CREATING BOOK CAT IN MAGENTO" name="message"/>
+                    <property name="category"/>
+                    <property value="INFO" name="level"/>
+                    <property value="45" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/scripting/groovyTransformer" name="constructCatObject" entity-id="Groovy#3">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="returnClass"/>
+                    <property name="ignoreBadInput"/>
+                    <property name="encoding"/>
+                    <property name="mimeType"/>
+                    <property value="46" name="auxiliary;index"/>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/scripting/script-for-properties;0">
+                        <property value="String[] s = ['Name', 'Price'] as String[]&#xA;def cat = [&#xA;&#x9;'parentId' : 1,&#xA;&#x9;'name' : 'Books',&#xA;&#x9;'storeId' : 'default',&#xA;&#x9;'availableSortBy' : s,&#xA;&#x9;'defaultSortBy' : 'Name'&#xA;]&#xA;return cat" name="text"/>
+                        <property value="Groovy" name="engine"/>
+                        <property value="47" name="auxiliary;index"/>
+                        <property value="47" name="auxiliary;wrapIn"/>
+                    </property-collection>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/scripting/script;0">
+                        <property value="String[] s = ['Name', 'Price'] as String[]&#xA;def cat = [&#xA;&#x9;'parentId' : 1,&#xA;&#x9;'name' : 'Books',&#xA;&#x9;'storeId' : 'default',&#xA;&#x9;'availableSortBy' : s,&#xA;&#x9;'defaultSortBy' : 'Name'&#xA;]&#xA;return cat" name="text"/>
+                        <property value="Groovy" name="engine"/>
+                        <property value="47" name="auxiliary;index"/>
+                        <property value="47" name="auxiliary;wrapIn"/>
+                    </property-collection>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/magento/magento-connector" name="Magento" entity-id="Magento#3">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name=""/>
+                    <property value="#[payload.parentId]" name="parentId"/>
+                    <property name="username"/>
+                    <property name="address"/>
+                    <property value="#[payload.storeId]" name="storeViewIdOrCode"/>
+                    <property value="http://www.mulesoft.org/schema/mule/magento/create-category" name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute"/>
+                    <property name="password"/>
+                    <property value="Magento" name="config-ref"/>
+                    <property value="48" name="auxiliary;index"/>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/magento/catalog-category-entity;0">
+                        <property value="0" name="include_in_menu"/>
+                        <property value="1" name="is_active"/>
+                        <property value="#[payload.name]" name="name"/>
+                        <property value="#[payload.availableSortBy]" name="available_sort_by-ref"/>
+                        <property value="#[payload.defaultSortBy]" name="default_sort_by"/>
+                        <property value="49" name="auxiliary;index"/>
+                        <property value="49" name="auxiliary;wrapIn"/>
+                    </property-collection>
+                </properties>
+            </pattern>
+            <pattern type="http://www.mulesoft.org/schema/mule/json/object-to-json-transformer" name="Object to JSON" entity-id="Object to JSON#2">
+                <graphicalData height="0" width="0" y="0" x="0"/>
+                <properties>
+                    <property name="sourceClass"/>
+                    <property name="returnClass"/>
+                    <property name="ignoreBadInput"/>
+                    <property name="encoding"/>
+                    <property name="mapper-ref"/>
+                    <property name="mimeType"/>
+                    <property value="50" name="auxiliary;index"/>
+                </properties>
+            </pattern>
+        </lane>
+    </flow>
+    <description></description>
+</mule-configuration>
